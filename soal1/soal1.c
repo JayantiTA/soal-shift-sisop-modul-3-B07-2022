@@ -154,16 +154,16 @@ char* decode_base64(char* str) // I found this function on google:)
   char* plain = malloc(strlen(str) * 3 / 4 + 1);
   int i = 0, p = 0;
 
-  for(i = 0; str[i] != '\0'; i++) {
+  for (i = 0; str[i] != '\0'; i++) {
       char k;
-      for(k = 0 ; k < 64 && base46_map[k] != str[i]; k++);
+      for (k = 0 ; k < 64 && base46_map[k] != str[i]; k++);
       buffer[counts++] = k;
-      if(counts == 4) {
+      if (counts == 4) {
           plain[p++] = (buffer[0] << 2) + (buffer[1] >> 4);
-          if(buffer[2] != 64) {
+          if (buffer[2] != 64) {
             plain[p++] = (buffer[1] << 4) + (buffer[2] >> 2);
           }
-          if(buffer[3] != 64) {
+          if (buffer[3] != 64) {
             plain[p++] = (buffer[2] << 6) + buffer[3];
           }
           counts = 0;
