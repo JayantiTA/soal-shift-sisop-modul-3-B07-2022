@@ -13,6 +13,7 @@
 char *path_to_folder = "/home/oem/shift3/hartakarun/";
 
 int total_files = 0;
+int status = 0;
 char infos[1000][1000];
 pthread_t tid[1000];
 
@@ -21,18 +22,37 @@ char* get_file_name(char *path_to_file);
 void* create_directory(char *folder_name);
 void* move_file(char *file_buffer, char *file_name, char *folder_name);
 void* process_file(void *path_to_file);
-void* list_file_recursively(char *basePath);
+void* list_file_recursively(char *base_path);
 
-int main ()
+void* zip_folder()
+{
+  pid_t child_id;
+  int status1;
+  child_id = fork();
+
+  if (child_id == 0) {
+    char *argv[] = {"zip", "-r", "./hartakarun.zip", "*/*", "-x", "./soal3.c", "./soal3", "./Client/*", "./Server/*", "./soal3.sh"};
+    execv("/usr/bin/zip", argv);
+  } else {
+    while (wait(&status1) > 0);
+    char *argv[] = {"mv", "./hartakarun.zip", "./Client", NULL};
+    execv("/usr/bin/mv", argv);
+  }
+}
+
+int main()
 {
   list_file_recursively(path_to_folder);
-  for (int i = 0; i < total_files; ++i) {
+  for (int i = 0; i < total_files + 1; ++i) {
     pthread_create(&(tid[i]), NULL, process_file, (char*) infos[i]);
   }
-  for (int i = 0; i < total_files; ++i){
+  
+  for (int i = 0; i < total_files + 1; ++i){
     pthread_join(tid[i], NULL);
   }
-
+  pthread_create(&(tid[0]), NULL, zip_folder, NULL);
+  pthread_join(tid[0], NULL);
+  
   exit(EXIT_SUCCESS);
 }
 
@@ -108,17 +128,17 @@ void* process_file(void *path_to_file)
   }
 }
 
-void* list_file_recursively(char *basePath)
+void* list_file_recursively(char *base_path)
 {
   char path[1000];
   struct dirent *dp;
-  DIR *dir = opendir(basePath);
+  DIR *dir = opendir(base_path);
 
   if (!dir) return;
 
   while ((dp = readdir(dir)) != NULL) {
     if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
-      strcpy(path, basePath);
+      strcpy(path, base_path);
       strcat(path, "/");
       strcat(path, dp->d_name);
       char check[10000];
