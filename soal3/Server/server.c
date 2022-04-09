@@ -8,76 +8,76 @@
 
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <netdb.h> // getprotobyname
+#include <netdb.h>
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-int main(int argc, char **argv) {
-  char protoname[] = "tcp";
-  char *file_path = "hartakarun.zip";
+int main()
+{
+  char *file_name = "hartakarun.zip";
   char buffer[BUFSIZ];
-  int client_sockfd;
-  int enable = 1;
-  int filefd;
-  int server_sockfd;
+  int client_fd;
+  int enable_reuseaddr = 1;
+  int filestream;
+  int server_fd;
   socklen_t client_len;
-  ssize_t read_return;
-  struct protoent *protoent;
+  ssize_t read_status;
+  struct protoent *proto;
   struct sockaddr_in client_address, server_address;
-  unsigned short server_port = 7702u;
+  unsigned short port = 7702u;
 
   // Create a socket and listen to it.
-  protoent = getprotobyname(protoname);
-  if (protoent == NULL) {
+  proto = getprotobyname("tcp");
+  if (proto == NULL) {
     perror("getprotobyname");
     exit(EXIT_FAILURE);
   }
-  server_sockfd = socket(AF_INET, SOCK_STREAM, protoent->p_proto);
-  if (server_sockfd == -1) {
+  server_fd = socket(AF_INET, SOCK_STREAM, proto->p_proto);
+  if (server_fd == -1) {
     perror("socket");
     exit(EXIT_FAILURE);
   }
-  if (setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0) {
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable_reuseaddr, sizeof(enable_reuseaddr)) < 0) {
     perror("setsockopt(SO_REUSEADDR) failed");
     exit(EXIT_FAILURE);
   }
   server_address.sin_family = AF_INET;
   server_address.sin_addr.s_addr = htonl(INADDR_ANY);
-  server_address.sin_port = htons(server_port);
-  if (bind(server_sockfd, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
+  server_address.sin_port = htons(port);
+  if (bind(server_fd, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
     perror("bind");
     exit(EXIT_FAILURE);
   }
-  if (listen(server_sockfd, 5) == -1) {
+  if (listen(server_fd, 5) == -1) {
     perror("listen");
     exit(EXIT_FAILURE);
   }
-  fprintf(stderr, "listening on port %d\n", server_port);
+  fprintf(stderr, "listening on port %d\n", port);
 
   while (1) {
     client_len = sizeof(client_address);
-    puts("waiting for client");
-    client_sockfd = accept(server_sockfd, (struct sockaddr*)&client_address, &client_len);
-    filefd = open(file_path, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    if (filefd == -1) {
+    printf("waiting for client\n");
+    client_fd = accept(server_fd, (struct sockaddr*)&client_address, &client_len);
+    filestream = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (filestream == -1) {
       perror("open");
       exit(EXIT_FAILURE);
     }
     do {
-      read_return = read(client_sockfd, buffer, BUFSIZ);
-      if (read_return == -1) {
+      read_status = read(client_fd, buffer, BUFSIZ);
+      if (read_status == -1) {
         perror("read");
         exit(EXIT_FAILURE);
       }
-      if (write(filefd, buffer, read_return) == -1) {
+      if (write(filestream, buffer, read_status) == -1) {
         perror("write");
         exit(EXIT_FAILURE);
       }
-    } while (read_return > 0);
-    close(filefd);
-    close(client_sockfd);
+    } while (read_status > 0);
+    close(filestream);
+    close(client_fd);
   }
   exit(EXIT_SUCCESS);
 }
