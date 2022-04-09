@@ -19,107 +19,93 @@ pthread_t tid[1000];
 char* get_folder_name(char *path_to_file);
 char* get_file_name(char *path_to_file);
 void* create_directory(char *folder_name);
-void* move_file(char *location, char *namaFile, char *ext);
-void* process_file(void *location);
+void* move_file(char *file_buffer, char *file_name, char *folder_name);
+void* process_file(void *path_to_file);
 void* list_file_recursively(char *basePath);
 
 int main ()
 {
   list_file_recursively(path_to_folder);
   for (int i = 0; i < total_files; ++i) {
-    pthread_create(&(tid[i]), NULL, process_file, (char*)infos[i]);
+    pthread_create(&(tid[i]), NULL, process_file, (char*) infos[i]);
   }
-  for(int i = 0; i < total_files; ++i){
-      pthread_join(tid[i], NULL);
+  for (int i = 0; i < total_files; ++i){
+    pthread_join(tid[i], NULL);
   }
+
+  exit(EXIT_SUCCESS);
 }
 
 char* get_folder_name(char *path_to_folder)
 {
-  char *token ;
+  char *folder_name ;
   char *str = path_to_folder;
   char *ret;
   ret = strrchr(str, '/'); 
   if (ret != NULL) {
     if (ret[1] == '.') {
-      token = "hidden";
-      return token;
+      return "hidden";
     }
   }
 
-  token = strtok(str, ".");
-  token = strtok(NULL, "");
-  if (token == NULL) {
+  folder_name = strtok(str, ".");
+  folder_name = strtok(NULL, "");
+  if (folder_name == NULL) {
     return "unknown";
   }
 
-  for (int i = 0; token[i]; ++i){
-    token[i] = tolower(token[i]);
+  for (int i = 0; folder_name[i]; ++i){
+    folder_name[i] = tolower(folder_name[i]);
   }
-  return token;
+  return folder_name;
 }
 
 char* get_file_name(char *path_to_file)
 {
   char *str = path_to_file;
-  char *token = strtok(str, "/");
-  int jumlah = 0;
-  char *namaFile[10];
-  while (token != NULL) {
-    namaFile[jumlah] = token;
-    token = strtok(NULL, "/");
-    jumlah++;
+  char *temp = strtok(str, "/");
+  int count = 0;
+  char *file_name[10];
+  while (temp != NULL) {
+    file_name[count] = temp;
+    temp = strtok(NULL, "/");
+    count++;
   }
-  return namaFile[jumlah - 1];
+  return file_name[count - 1];
 }
 
 void* create_directory(char *folder_name)
 {
-  char path[100];
-  strcpy(path, "hasil/");
-  strcat(path, folder_name);
   mkdir(folder_name, 0777);
 }
 
-void* move_file(char *location, char *namaFile, char *ext)
+void* move_file(char *file_buffer, char *file_name, char *folder_name)
 {
-  // int ret;
   char newname[2000];
-  if (strcmp(ext, "unknown") == 0 || strcmp(ext, "hidden") == 0 ) {
-      snprintf(newname, sizeof newname, "%s/%s", ext, namaFile);
+  if (strcmp(folder_name, "unknown") == 0 || strcmp(folder_name, "hidden") == 0 ) {
+    snprintf(newname, sizeof newname, "%s/%s", folder_name, file_name);
   } else {
-      snprintf(newname, sizeof newname, "%s/%s.%s", ext, namaFile, ext);
+    snprintf(newname, sizeof newname, "%s/%s.%s", folder_name, file_name, folder_name);
   }
-  rename(location, newname);
-  // printf("%s %s %s\n", location, namaFile, newname);
-  // ret = rename(location, newname);
+  rename(file_buffer, newname);
 }
 
-void* process_file(void *location)
+void* process_file(void *path_to_file)
 {
-    char *token, *fileName;
-    char *fileLoc, fileLocCoba[2600], *location1;
-    struct dirent *de;  // Pointer for directory entry
-    
-    // opendir() returns a pointer of DIR type. 
-    fileLoc = (char *) location;
-    location1 = (char *) location;
-    DIR *dr = opendir(fileLoc);
-  
-    if (dr == NULL)  // opendir returns NULL if couldn't open directory
-    {
-        snprintf(fileLocCoba, sizeof fileLocCoba, "%s", fileLoc);
-        // printf("FileLoc = %s\n", fileLoc);
-        token = get_folder_name(location1);
-        fileName = get_file_name(location);
-        // printf("token = %s filename = %s\n", token, fileName);
-        // printf("%s\n", fileName);
-        // for(int i = 0; token[i]; i++){
-        //    token[i] = tolower(token[i]);
-        // }
-        create_directory(token);
-        move_file(fileLocCoba, fileName, token);
-    }
+  char *folder_name, *file_name;
+  char *file_path, file_buffer[10000];
+
+  file_path = (char *) path_to_file;
+  DIR *dir_path = opendir(file_path);
+
+  if (dir_path == NULL)
+  {
+    snprintf(file_buffer, sizeof file_buffer, "%s", file_path);
+    folder_name = get_folder_name(path_to_file);
+    file_name = get_file_name(path_to_file);
+    create_directory(folder_name);
+    move_file(file_buffer, file_name, folder_name);
+  }
 }
 
 void* list_file_recursively(char *basePath)
@@ -128,58 +114,28 @@ void* list_file_recursively(char *basePath)
   struct dirent *dp;
   DIR *dir = opendir(basePath);
 
-  if (!dir)
-      return;
-  while ((dp = readdir(dir)) != NULL)
-  {
-      if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
-      {
-          strcpy(path, basePath);
-          strcat(path, "/");
-          strcat(path, dp->d_name);
-          char check[10000];
-          snprintf(check, sizeof check, "%s", dp->d_name);
-          if (check[0] == '.'){
-              create_directory("hidden");
-              char moves[10000];
-              snprintf(moves, sizeof moves, "hidden/%s", dp->d_name);
-              rename(path, moves);
-          } else {
-              // printf("%s\n", path);
-              char loc[1000];
-              strcpy(loc, path);
-              // printf("%d\n", banyak);
-              snprintf(infos[total_files], sizeof loc, "%s", loc);
-              // printf("isi = %s", infos[banyak]);
-              total_files += 1;
-              // list_file_recursively(path);
-          }
-          // strcpy(path, basePath);
-          // strcat(path, "/");
-          // strcat(path, dp->d_name);
-          // printf("path = %s\n", path);
-          // pthread_create(&(tid[banyakFile]), NULL, process_file, (char*)path);
-          // printf("processPath = %s\n", path);
-          // printf("banyakFile = %d\n", banyakFile);
-          // char loc[1000];
-          // strcpy(loc, path);
-          // // info[banyak] = loc;
-          // // banyak++;
-          // // printf("info %d = %s\n", banyakFile, info[2][1]);
-          // //jagnan lupa join
-          // // process_file(path);
-          // snprintf(infos[banyak], sizeof loc, "%s", loc);
-          // // info[banyak] = loc;
-          // // if(banyak >0 ){
-          // //     printf("info %d = %s\n", banyakFile, infos[banyak-1]);
-          // // }
-          // // printf("info %d = %s\n", banyakFile, infos[banyak]);
-          // banyak = banyak + 1;
-          // banyakFile++;
-          list_file_recursively(path);
-          // pthread_create(&(tid[banyakFile]), NULL, process_file, (char*)path);
-          // process_file(path);
+  if (!dir) return;
+
+  while ((dp = readdir(dir)) != NULL) {
+    if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
+      strcpy(path, basePath);
+      strcat(path, "/");
+      strcat(path, dp->d_name);
+      char check[10000];
+      snprintf(check, sizeof check, "%s", dp->d_name);
+      if (check[0] == '.') {
+        create_directory("hidden");
+        char moves[10000];
+        snprintf(moves, sizeof moves, "hidden/%s", dp->d_name);
+        rename(path, moves);
+      } else {
+        char loc[1000];
+        strcpy(loc, path);
+        snprintf(infos[total_files], sizeof loc, "%s", loc);
+        total_files += 1;
       }
+      list_file_recursively(path);
+    }
   }
   closedir(dir);
 }
