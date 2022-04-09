@@ -217,7 +217,7 @@ int main()
 						getUsernameAndPasswordFromClient(message, usernameFromClient, passwordFromClient);
 						int usernameFromClientLength = strlen(usernameFromClient);
 						
-						if (checkPasswordCompatible(passwordFromClient) != 0)
+						if (strlen(passwordFromClient) >= 6 && checkPasswordCompatible(passwordFromClient) != 0)
 						{
 							char usernameFromDatabase[128];
 							
@@ -266,7 +266,7 @@ int main()
 								char passwordFromClient[33];
 								getUsernameAndPasswordFromClient(message, usernameFromClient, passwordFromClient);
 								
-								if (checkPasswordCompatible(passwordFromClient) != 0)
+								if (strlen(passwordFromClient) >= 6 && checkPasswordCompatible(passwordFromClient) != 0)
 								{
 									char usernameFromDatabase[33];
 									char passwordFromDatabase[33];
