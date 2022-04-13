@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <stdbool.h>
+#include <string.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <ctype.h>
+#include <errno.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -14,9 +20,24 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+char *path_to_file = "/home/oem/Kuliah/SISOP/soal-shift-sisop-modul-3-b07-2022/soal3/";
+void* zip_file() {
+  pid_t child_id;
+  int status1;
+
+  child_id = fork();
+  if (child_id == 0) {
+    printf("haloo");
+    char *argv[] = {"zip", "-r", "./hartakarun.zip", "/home/oem/shift3/hartakarun", NULL};
+    execv("/usr/bin/zip", argv);
+  } else {
+    while (wait(&status1) > 0);
+  }
+}
+
 int main(int argc, char **argv)
 {
-  char *file_name;
+  char *file_name = "hartakarun.zip";
   char *hostname = "127.0.0.1";
   char buffer[BUFSIZ];
   in_addr_t in_address;
@@ -27,6 +48,8 @@ int main(int argc, char **argv)
   struct protoent *proto;
   struct sockaddr_in socket_address;
   unsigned short port = 7702;
+
+  zip_file();
 
   if (argc > 1) {
     if (strcmp(argv[1], "send") == 0) {
