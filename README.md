@@ -329,6 +329,10 @@ gcc -pthread -o soal1 soal1.c
 
 ### dokumentasi
 
+![Screenshot_from_2022-04-08_03-52-16](/uploads/effddec6befbb1347518c9b65b1d5893/Screenshot_from_2022-04-08_03-52-16.png)
+
+![Screenshot_from_2022-04-06_03-32-29](/uploads/0e6cd58b25f0835d55451b0f5eebdb28/Screenshot_from_2022-04-06_03-32-29.png)
+
 Kendala yang dialami adalah kurang mengerti cara menggunakan `/usr/bin/base64` untuk men-*decode* base64 menggunakan `exec()`. Sehingga untuk mengatasi hal tersebut, digunakan fungsi *decode* menggunakan bahasa C. Selain itu, sempat kurang mengerti mengapa file yang di-*download* tidak urut sesuai nama sehingga menyebabkan hasil line *decode* juga tidak urut.
 
 ## Nomor 2
@@ -1726,5 +1730,7 @@ gcc server.c -o server # pada direktori Server/
 ```
 
 ### dokumentasi
+
+![Screenshot_from_2022-04-08_15-51-20](/uploads/80949b7f861cad05e51144204957ba52/Screenshot_from_2022-04-08_15-51-20.png)
 
 Kendala yang sempat dihadapi adalah kurang paham dalam memindahkan file ke setiap folder kategori, hingga akhirnya menggunakan `snprintf`. Sempat tidak selesai pada bagian zip file karena sudah mendekati deadline saat membaca ulang bahwa diperbolehkan menggunakan `exec()` dan `fork()`. Sempat kebingungan dalam program client-server hingga akhirnya menemukan cara mengirim file dengan protokol TCP dan yang dikirim berupa buffer kemudian baru diproses *write* ke file yang dituju (`hartakarun.zip`).
