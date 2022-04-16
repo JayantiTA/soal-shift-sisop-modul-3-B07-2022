@@ -8,6 +8,329 @@ Anggota:
 2. [Jayanti Totti Andhina](https://gitlab.com/JayantiTA) (5025201037)
 3. [Agnesfia Anggraeni](https://gitlab.com/agnesfiaa) (5025201059)
 
+## Nomor 1
+
+### 1a
+
+Download dua file zip dan unzip file zip tersebut di dua folder yang berbeda dengan nama quote untuk file zip quote.zip dan music untuk file zip music.zip. Unzip ini dilakukan dengan bersamaan menggunakan thread.
+
+Thread yang dibuat:
+
+```C++
+int main()
+{
+    pthread_t thread1, thread2, thread3;
+    const char *file_name1 = "music";
+    const char *file_name2 = "quote";
+    
+    // download music.zip and quote.zip (1a - 1d)
+    pthread_create(&thread1, NULL, download_and_unzip, (char*) file_name1);
+    pthread_create(&thread2, NULL, download_and_unzip, (char*) file_name2);
+    pthread_create(&thread3, NULL, zip_hasil_folder, NULL);
+
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL); 
+    pthread_join(thread3, NULL);
+    ...
+```
+
+### 1b
+
+Decode semua file .txt yang ada dengan base 64 dan masukkan hasilnya dalam satu file .txt yang baru untuk masing-masing folder (Hasilnya nanti ada dua file .txt) pada saat yang sama dengan menggunakan thread dan dengan nama quote.txt dan music.txt. Masing-masing kalimat dipisahkan dengan newline/enter.
+
+Fungsi untuk men-*download*, unzip, hingga membuat dua file `.txt`:
+
+```C++
+void* download_and_unzip(char* folder_name)
+{
+  pid_t child_id_1, child_id_2, child_id_3,
+    child_id_4, child_id_5;
+  child_id_1 = fork();
+  int status1;
+
+  if (child_id_1 == 0) {
+    child_id_2 = fork();
+    int status2;
+
+    if (child_id_2 == 0) { // download zip file
+      if (strcmp(folder_name, "music") == 0) {
+        char *argv[] = {"wget", "--no-check-certificate", link1, "-O", "music.zip", NULL};
+        execv("/usr/bin/wget", argv);
+      } else if (strcmp(folder_name, "quote") == 0) {
+        char *argv[] = {"wget", "--no-check-certificate", link2, "-O", "quote.zip", NULL};
+        execv("/usr/bin/wget", argv);
+      }
+    } else { // unzip file
+      while ((wait(&status2)) > 0);
+      char *argv[] = {"unzip", folder_name, "-d", folder_name, NULL};
+      execv("/usr/bin/unzip", argv);
+    }
+  } else {
+    while ((wait(&status1)) > 0);
+    child_id_3 = fork();
+    int status3;
+
+    if (child_id_3 == 0) {
+      child_id_4 = fork();
+      int status4;
+      if (child_id_4 == 0) { // remove zip file
+        char *file_name = malloc(sizeof(char) * 100);
+        strcpy(file_name, folder_name);
+        strcat(file_name, ".zip");
+        char *argv[] = {"rm", file_name};
+        execv("/usr/bin/rm", argv);
+      } else { // create .txt file using folder name
+        while((wait(&status4)) > 0);
+        char *file_name = malloc(sizeof(char) * 100);
+        strcpy(file_name, folder_name);
+        strcat(file_name, ".txt");
+        char *argv[] = {"touch", file_name, NULL};
+        execv("/usr/bin/touch", argv);
+      }
+    } else {
+      while ((wait(&status3)) > 0);
+      child_id_5 = fork();
+      int status5;
+
+      if (child_id_5 == 0) { // listing directory
+        DIR *dir_path;
+        struct dirent *dir;
+        dir_path = opendir(folder_name);
+        while((dir = readdir(dir_path))) {
+          if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
+            read_line(folder_name, dir->d_name); // read line function
+          }
+        }
+      } else {
+        while ((wait(&status5)) > 0);
+        move_to_folder(folder_name, folder_name); // move .txt files to folder hasil/
+      }
+    }
+  }
+}
+```
+
+Fungsi untuk membaca setiap line dalam file `.txt` hasil *extract* dan men-*decode* base64:
+
+```C++
+char base46_map[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                     'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+                     'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+                     'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'};
+
+void* read_line(char* folder_name, char* file_name)
+{
+  char filepath[100]; // .txt files inside folder (q1 - q9 and m1 - m9)
+  strcpy(filepath, folder_name);
+  strcat(filepath, "/");
+  strcat(filepath, file_name);
+
+  char file_txt[100]; // .txt file after being decoded
+  strcpy(file_txt, folder_name);
+  strcat(file_txt, ".txt");
+
+  FILE *file;
+  file = fopen(filepath, "a+");
+
+  FILE *file_base64;
+  file_base64 = fopen(file_txt, "a");
+
+  char str[255];
+  while(fgets(str, 255, file)) {
+    printf("%s\n", str);
+    fprintf(file_base64, "%s\n", decode_base64(str)); // decode every line in file
+  }
+
+  fclose(file);
+}
+
+char* decode_base64(char* str) // I found this function on google:)
+{
+  char counts = 0;
+  char buffer[4];
+  char* plain = malloc(strlen(str) * 3 / 4 + 1);
+  int i = 0, p = 0;
+
+  for (i = 0; str[i] != '\0'; i++) {
+      char k;
+      for (k = 0 ; k < 64 && base46_map[k] != str[i]; k++);
+      buffer[counts++] = k;
+      if (counts == 4) {
+          plain[p++] = (buffer[0] << 2) + (buffer[1] >> 4);
+          if (buffer[2] != 64) {
+            plain[p++] = (buffer[1] << 4) + (buffer[2] >> 2);
+          }
+          if (buffer[3] != 64) {
+            plain[p++] = (buffer[2] << 6) + buffer[3];
+          }
+          counts = 0;
+      }
+  }
+  plain[p] = '\0';
+  return plain;
+}
+```
+
+### 1c
+
+Pindahkan kedua file .txt yang berisi hasil decoding ke folder yang baru bernama hasil.
+
+```C++
+void* move_to_folder(char* folder_name, char* file_name)
+{
+  pid_t child_id_1, child_id_2;
+
+  child_id_1 = fork();
+  int status1;
+  if (child_id_1 == 0) {
+    child_id_2 = fork();
+    int status2;
+
+    if (child_id_2 == 0) { // remove folder after decoded all .txt files
+      char *argv[] = {"rm", "-rf", folder_name, NULL};
+      execv("/usr/bin/rm", argv);
+    } else { // create new directory named hasil/
+      while ((wait(&status2)) > 0);
+      char *argv[] = {"mkdir", "-p", "hasil", NULL};
+      execv("/usr/bin/mkdir", argv);
+    }
+  } else {
+    while ((wait(&status1)) > 0);
+    pid_t child_id_3 = fork();
+    int status3;
+
+    if (child_id_3 == 0) { // move .txt that contains decoded message into hasil/
+      char filename[100];
+      strcpy(filename, folder_name);
+      strcat(filename, ".txt");
+      char *argv[] = {"mv", filename, "hasil", NULL};
+      execv("/usr/bin/mv", argv);
+    } else { // status count (zip folder after music.txt and quote.txt being moved)
+      while ((wait(&status3)) > 0);
+      status += 1;
+    }
+  }
+}
+```
+
+### 1d
+
+Folder hasil di-zip menjadi file hasil.zip dengan password 'mihinomenest[Nama user]'. (contoh password : mihinomenestnovak)
+
+```C++
+void* zip_hasil_folder()
+{
+  pid_t child_id_1, child_id_2;
+  int status1;
+
+  while (status != 2) { // music.txt or quote.txt haven't being moved yet
+  }
+  
+  child_id_1 = fork();
+  if (child_id_1 == 0) {
+    int status2;
+    child_id_2 = fork();
+
+    if (child_id_2 == 0) { // zip folder hasil/
+      char* argv[] = {"zip", "-r", "-P", "mihinomenestjay", "hasil.zip", "hasil", NULL};
+      execv("/usr/bin/zip", argv);
+    } else { // remove folder hasil/
+      while ((wait(&status2)) > 0);
+      char *argv[] = {"rm", "-rf", "hasil", NULL};
+      execv("/bin/rm", argv);
+    }
+  } else {
+    while ((wait(&status1)) > 0);
+  }
+}
+```
+
+### 1e
+
+Karena ada yang kurang, kalian diminta untuk unzip file hasil.zip dan buat file no.txt dengan tulisan 'No' pada saat yang bersamaan, lalu zip kedua file hasil dan file no.txt menjadi hasil.zip, dengan password yang sama seperti sebelumnya.
+
+Buat thread baru dan menunggu thread lama selesai dijalankan hingga zip folder.
+
+```C++
+...
+    // unzip and create file no.txt (1e)
+    pthread_create(&thread1, NULL, unzip_file_using_password, "hasil.zip");
+    pthread_create(&thread2, NULL, create_no_txt, NULL);
+    pthread_create(&thread3, NULL, zip_hasil_folder, NULL);
+
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+    pthread_join(thread3, NULL);
+...
+```
+
+Fungsi untuk unzip dan membuat file baru:
+
+```C++
+void* unzip_file_using_password()
+{
+  pid_t child_id_1;
+  int status1;
+
+  child_id_1 = fork();
+  if (child_id_1 == 0) {
+    pid_t child_id_2 = fork();
+    int status2;
+    if (child_id_2 == 0) { // to unzip hasil.zip using password
+      char* argv[] = {"unzip", "-P", "mihinomenestjay", "hasil.zip", NULL};
+      execv("/usr/bin/unzip", argv);
+    } else { // remove hasil.zip
+      while ((wait(&status2)) > 0);
+      char *argv[] = {"rm", "hasil.zip", NULL};
+      execv("/bin/rm", argv);
+    }
+  } else {
+    while ((wait(&status1)) > 0);
+    status = 3;
+  }
+}
+
+void* create_no_txt()
+{
+  pid_t child_id_1;
+  int status1;
+
+  child_id_1 = fork();
+  if (child_id_1 == 0) {
+    pid_t child_id_2 = fork();
+    int status2;
+    if (child_id_2 == 0) { // create new file named no.txt
+      char* argv[] = {"touch", "no.txt", NULL};
+      execv("/usr/bin/touch", argv);
+    } else { // write "No" to file and then move it to folder hasil/
+      while ((wait(&status2)) > 0);
+      FILE *file_no_txt;
+      file_no_txt = fopen("no.txt", "w+");
+      fprintf(file_no_txt, "No");
+      fclose(file_no_txt);
+      char *argv[] = {"mv", "no.txt", "hasil", NULL};
+      execv("/bin/mv", argv);
+    }
+  } else { // set status to 2 and then zip folder hasil again
+    while ((wait(&status1)) > 0);
+    status = 2;
+  }
+}
+```
+
+Kemudian dipanggil kembali fungsi zip menggunakan thread.
+
+### run program
+
+```bash
+gcc -pthread -o soal1 soal1.c
+./soal1
+```
+
+### dokumentasi
+
+Kendala yang dialami adalah kurang mengerti cara menggunakan `/usr/bin/base64` untuk men-*decode* base64 menggunakan `exec()`. Sehingga untuk mengatasi hal tersebut, digunakan fungsi *decode* menggunakan bahasa C. Selain itu, sempat kurang mengerti mengapa file yang di-*download* tidak urut sesuai nama sehingga menyebabkan hasil line *decode* juga tidak urut.
+
 ## Nomor 2
 
 ### client.c
@@ -15,12 +338,12 @@ Anggota:
 ```C++
 void addTextToFileProblem(char *problemTitle, char *fileName, char *text)
 {
-	char fileNameWithDirectory[256];
-	sprintf(fileNameWithDirectory, "%s/%s", problemTitle, fileName);
-	
-	FILE *fileWriter = fopen(fileNameWithDirectory, "a");
-	fprintf(fileWriter, "%s\n", text);
-	fclose(fileWriter);
+ char fileNameWithDirectory[256];
+ sprintf(fileNameWithDirectory, "%s/%s", problemTitle, fileName);
+ 
+ FILE *fileWriter = fopen(fileNameWithDirectory, "a");
+ fprintf(fileWriter, "%s\n", text);
+ fclose(fileWriter);
 }
 ```
 
@@ -29,12 +352,12 @@ Function addTextToFileProblem digunakan untuk menambahkan string ke dalam sebuah
 ```C++
 void recvWithoutTestByte(int fd, char *buffer, size_t size)
 {
-	int byteCode = '0';
-	while(byteCode == '0')
-	{
-		recv(fd, buffer, size, 0);
-		byteCode = buffer[0];
-	}
+ int byteCode = '0';
+ while(byteCode == '0')
+ {
+  recv(fd, buffer, size, 0);
+  byteCode = buffer[0];
+ }
 }
 ```
 
@@ -43,63 +366,64 @@ Function recvWithoutTestByte digunakan untuk mengambil message yang dikirim oleh
 ```C++
 void getProblemNameAndSubmitFile(char *text, char *problemName, char *submitFile)
 {
-	int i = 0;
-	
-	if (text[0] == '"')
-	{
-		text += 1;
-		while(*text != '"')
-		{
-			problemName[i] = *text;
-			text += 1;
-			i += 1;
-		}
-		text += 1;
-	}
-	else
-	{
-		while(*text != ' ')
-		{
-			problemName[i] = *text;
-			text += 1;
-			i += 1;
-		}
-	}
-	problemName[i] = '\0';
-	
-	while(*text == ' ')
-	{
-		text += 1;
-	}
-	
-	i = 0;
-	if (text[0] == '"')
-	{
-		text += 1;
-		while(*text != '"')
-		{
-			submitFile[i] = *text;
-			text += 1;
-			i += 1;
-		}
-		text += 1;
-	}
-	else
-	{
-		while(*text != ' ')
-		{
-			submitFile[i] = *text;
-			text += 1;
-			i += 1;
-		}
-	}
-	submitFile[i] = '\0';
+ int i = 0;
+ 
+ if (text[0] == '"')
+ {
+  text += 1;
+  while(*text != '"')
+  {
+   problemName[i] = *text;
+   text += 1;
+   i += 1;
+  }
+  text += 1;
+ }
+ else
+ {
+  while(*text != ' ')
+  {
+   problemName[i] = *text;
+   text += 1;
+   i += 1;
+  }
+ }
+ problemName[i] = '\0';
+ 
+ while(*text == ' ')
+ {
+  text += 1;
+ }
+ 
+ i = 0;
+ if (text[0] == '"')
+ {
+  text += 1;
+  while(*text != '"')
+  {
+   submitFile[i] = *text;
+   text += 1;
+   i += 1;
+  }
+  text += 1;
+ }
+ else
+ {
+  while(*text != ' ')
+  {
+   submitFile[i] = *text;
+   text += 1;
+   i += 1;
+  }
+ }
+ submitFile[i] = '\0';
 }
 ```
 
 Function getProblemNameAndSubmitFile digunakan untuk memparse string agar string yang berada di antara dua tanda petik dua ("...") menjadi satu kesatuan. Ini digunakan untuk command submit agar problem dengan nama lebih dari satu kata dapat diakses dan file ouput yang akan disubmit juga dapat memiliki spasi pada nama filenya.
 
 Masuk ke dalam main
+
 ```C++
 struct sockaddr_in socketAddress;
 int socketFileDescriptor;
@@ -142,7 +466,7 @@ if (currentPage == 0)
         printf("Pilih menu\n");
         printf("1. Register\n");
         printf("2. Login\n");
-        scanf("%d", &respon);	
+        scanf("%d", &respon); 
     }
     
     if (respon == 1)
@@ -563,8 +887,8 @@ Function setupEpollConnection untuk menambahkan file descriptor koneksi user pad
 ```C++
 void strcpyOffset(char *dest, char *src, int offset, int length)
 {
-	strncpy(dest, src + offset, length);
-	dest[length] = '\0';
+ strncpy(dest, src + offset, length);
+ dest[length] = '\0';
 }
 ```
 
@@ -573,14 +897,14 @@ Function strcpyOffset adalah modifikasi strcpy untuk mengambil substring dengan 
 ```C++
 void getUsernameAndPasswordFromClient(char message[], char username[], char password[])
 {
-	int usernameFromClientLength = message[1];
-	int passwordFromClientLength = message[2];
-	
-	strcpyOffset(username, message, 3, usernameFromClientLength);
-	username[usernameFromClientLength] = '\0';
-	
-	strcpyOffset(password, message, 3 + usernameFromClientLength, passwordFromClientLength);
-	password[passwordFromClientLength] = '\0';
+ int usernameFromClientLength = message[1];
+ int passwordFromClientLength = message[2];
+ 
+ strcpyOffset(username, message, 3, usernameFromClientLength);
+ username[usernameFromClientLength] = '\0';
+ 
+ strcpyOffset(password, message, 3 + usernameFromClientLength, passwordFromClientLength);
+ password[passwordFromClientLength] = '\0';
 }
 ```
 
@@ -589,30 +913,30 @@ Function getUsernameAndPasswordFromClient digunakan untuk parse byte message yan
 ```C++
 int checkPasswordCompatible(char *password)
 {
-	int length = strlen(password);
-	int containCapital = 0;
-	int containSmall = 0;
-	int containNumber = 0;
-	for(int i = 0; i < length; i++)
-	{
-		if (password[i] >= 'a' && password[i] <= 'z')
-		{
-			containSmall = 1;
-		}
-		else if (password[i] >= 'A' && password[i] <= 'Z')
-		{
-			containCapital = 1;
-		}
-		else if (password[i] >= '0' && password[i] <= '9')
-		{
-			containNumber = 1;
-		}
-		else
-		{
-			return 0;
-		}
-	}
-	return containCapital & containSmall & containNumber;
+ int length = strlen(password);
+ int containCapital = 0;
+ int containSmall = 0;
+ int containNumber = 0;
+ for(int i = 0; i < length; i++)
+ {
+  if (password[i] >= 'a' && password[i] <= 'z')
+  {
+   containSmall = 1;
+  }
+  else if (password[i] >= 'A' && password[i] <= 'Z')
+  {
+   containCapital = 1;
+  }
+  else if (password[i] >= '0' && password[i] <= '9')
+  {
+   containNumber = 1;
+  }
+  else
+  {
+   return 0;
+  }
+ }
+ return containCapital & containSmall & containNumber;
 }
 ```
 
@@ -621,8 +945,8 @@ Function checkPasswordCompatible untuk mengecek apakah sebuah string terdiri dar
 ```C++
 void createProblemDatabaseFile()
 {
-	FILE *problemDatabaseFile = fopen("problems.tsv", "a");
-	fclose(problemDatabaseFile);
+ FILE *problemDatabaseFile = fopen("problems.tsv", "a");
+ fclose(problemDatabaseFile);
 }
 
 ```
@@ -632,18 +956,18 @@ Function createProblemDatabaseFile digunakan untuk membuat file database penyimp
 ```C++
 int problemDatabaseFileCheckTitleExist(char *problemTitle)
 {
-	FILE *problemDatabaseFile = fopen("problems.tsv", "r");
-	char line[128];
-	int problemTitleLength = strlen(problemTitle);
-	 
-	while(fscanf(problemDatabaseFile, " %[^\n]",  line) != EOF)
-	{
-		if (strncmp(problemTitle, line, problemTitleLength) == 0)
-		{
-			return 1;
-		}
-	}
-	return 0;
+ FILE *problemDatabaseFile = fopen("problems.tsv", "r");
+ char line[128];
+ int problemTitleLength = strlen(problemTitle);
+  
+ while(fscanf(problemDatabaseFile, " %[^\n]",  line) != EOF)
+ {
+  if (strncmp(problemTitle, line, problemTitleLength) == 0)
+  {
+   return 1;
+  }
+ }
+ return 0;
 }
 ```
 
@@ -652,10 +976,10 @@ Function problemDatabaseFileCheckTitleExist digunakan untuk mengecek apakah terd
 ```C++
 int problemDatabaseFileAddNewProblem(char *problemTitle, char *userName)
 {
-	FILE *problemDatabaseFile = fopen("problems.tsv", "a");
-	fprintf(problemDatabaseFile, "%s\t%s\n", problemTitle, userName);
-	fclose(problemDatabaseFile);
-	return mkdir(problemTitle, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+ FILE *problemDatabaseFile = fopen("problems.tsv", "a");
+ fprintf(problemDatabaseFile, "%s\t%s\n", problemTitle, userName);
+ fclose(problemDatabaseFile);
+ return mkdir(problemTitle, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
 ```
 
@@ -664,12 +988,12 @@ Function problemDatabaseFileAddNewProblem digunakan untuk menambahkan problem pa
 ```C++
 void addTextToFileInProblemDirectory(char *problemTitle, char *fileName, char *text)
 {
-	char fileNameWithDirectory[256];
-	sprintf(fileNameWithDirectory, "%s/%s", problemTitle, fileName);
-	
-	FILE *fileWriter = fopen(fileNameWithDirectory, "a");
-	fprintf(fileWriter, "%s\n", text);
-	fclose(fileWriter);
+ char fileNameWithDirectory[256];
+ sprintf(fileNameWithDirectory, "%s/%s", problemTitle, fileName);
+ 
+ FILE *fileWriter = fopen(fileNameWithDirectory, "a");
+ fprintf(fileWriter, "%s\n", text);
+ fclose(fileWriter);
 }
 ```
 
@@ -690,7 +1014,7 @@ struct epoll_event epollEvents[1024], epoll_temp;
 int epollEvent;
 int epollFileDescriptor = epoll_create(1);
 
-int timeout_msecs = 1000;	
+int timeout_msecs = 1000; 
 char message[2048];
 
 serverFileDescriptor = createTCPServerSocket(); 
@@ -818,7 +1142,7 @@ else if (message[0] == 'l')
                 }
                 
                 strcpy(message, respon);
-                send(epollEvents[i].data.fd, message, sizeof(message), 0);	
+                send(epollEvents[i].data.fd, message, sizeof(message), 0); 
                 
                 if (respon[0] == 'l')
                 {
@@ -852,7 +1176,7 @@ else if (message[0] == 'p')
         if (message[2] == 'n')
         {
             strcpy(message, "Judul problem: ");
-            send(epollEvents[i].data.fd, message, sizeof(message), 0);							
+            send(epollEvents[i].data.fd, message, sizeof(message), 0);       
         }
         else if (message[2] == 't')
         {
@@ -1072,6 +1396,7 @@ else if (message[0] == 'b')
 Bila server menerima byte "b" itu artinya user sedang submit sebuah problem, server akan membandingkan semua line output dengan yang dikirim oleh user dan bila sama maka akan mengirimkan message "AC" kepada user dan bila tidak "WA". Newline kosong setelah semua output tidak akan dianggap.
 
 ### dokumentasi
+
 ![pengerjaan_1](/uploads/b6b656bcbb5d5912067c64771f3d5b9a/pengerjaan_1.png)
 
 ![pengerjaan_3](/uploads/fbd0ae28b13904f60a14d326a8b71085/pengerjaan_3.png)
@@ -1083,3 +1408,323 @@ Bila server menerima byte "b" itu artinya user sedang submit sebuah problem, ser
 ![pengerjaan_7](/uploads/fcda16899331694f7bda83e3c1b060aa/pengerjaan_7.png)
 
 permasalahan yang dihadapi adalah membuat epoll dikarenakan dokumentasi yang tidak begitu jelas di internet dan mencari cara agar hanya 1 user yang dapat login pada satu waktu. Namun semua permasalahan berhasil diselesaikan.
+
+## Nomor 3
+
+### soal3.c
+
+Fungsi untuk listing file secara rekursif:
+
+```C++
+void* list_file_recursively(char *base_path)
+{
+  char path[1000];
+  struct dirent *dp;
+  DIR *dir = opendir(base_path);
+
+  if (!dir) return;
+
+  while ((dp = readdir(dir)) != NULL) {
+    if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
+      strcpy(path, base_path);
+      strcat(path, "/");
+      strcat(path, dp->d_name);
+      char check[10000];
+      snprintf(check, sizeof check, "%s", dp->d_name);
+      if (check[0] == '.') {
+        create_directory("hidden");
+        char moves[10000];
+        snprintf(moves, sizeof moves, "hidden/%s", dp->d_name);
+        rename(path, moves);
+      } else {
+        char loc[1000];
+        strcpy(loc, path);
+        snprintf(infos[total_files], sizeof loc, "%s", loc);
+        total_files += 1;
+      }
+      list_file_recursively(path);
+    }
+  }
+  closedir(dir);
+}
+```
+
+Thread dari setiap file dan memproses file:
+
+```C++
+int main()
+{
+  list_file_recursively(path_to_folder);
+  for (int i = 0; i < total_files; ++i) {
+    pthread_create(&(tid[i]), NULL, process_file, (char*) infos[i]);
+  }
+  
+  for (int i = 0; i <= total_files; ++i){
+    pthread_join(tid[i], NULL);
+  }
+  
+  exit(EXIT_SUCCESS);
+}
+
+void* process_file(void *path_to_file)
+{
+  char *folder_name, *file_name;
+  char *file_path, file_buffer[10000];
+
+  file_path = (char *) path_to_file;
+  DIR *dir_path = opendir(file_path);
+
+  if (dir_path == NULL)
+  {
+    snprintf(file_buffer, sizeof file_buffer, "%s", file_path);
+    folder_name = get_folder_name(path_to_file);
+    file_name = get_file_name(path_to_file);
+    create_directory(folder_name);
+    move_file(file_buffer, file_name, folder_name);
+  }
+}
+```
+
+Fungsi untuk mendapatkan kategori file atau nama folder:
+
+```C++
+char* get_folder_name(char *path_to_folder)
+{
+  char *folder_name ;
+  char *str = path_to_folder;
+  char *ret;
+  ret = strrchr(str, '/'); 
+  if (ret != NULL) {
+    if (ret[1] == '.') {
+      return "hidden";
+    }
+  }
+
+  folder_name = strtok(str, ".");
+  folder_name = strtok(NULL, "");
+  if (folder_name == NULL) {
+    return "unknown";
+  }
+
+  for (int i = 0; folder_name[i]; ++i){
+    folder_name[i] = tolower(folder_name[i]);
+  }
+  return folder_name;
+}
+```
+
+Fungsi untuk mendapatkan nama file:
+
+```C++
+char* get_file_name(char *path_to_file)
+{
+  char *str = path_to_file;
+  char *temp = strtok(str, "/");
+  int count = 0;
+  char *file_name[10];
+  while (temp != NULL) {
+    file_name[count] = temp;
+    temp = strtok(NULL, "/");
+    count++;
+  }
+  return file_name[count - 1];
+}
+```
+
+Fungsi untuk membuat direktori berdasarkan kategori file:
+
+```C++
+void* create_directory(char *folder_name)
+{
+  mkdir(folder_name, 0777);
+}
+```
+
+Fungsi untuk memindahkan file ke dalam folder kategori setiap file:
+
+```C++
+void* move_file(char *file_buffer, char *file_name, char *folder_name)
+{
+  char newname[2000];
+  if (strcmp(folder_name, "unknown") == 0 || strcmp(folder_name, "hidden") == 0 ) {
+    snprintf(newname, sizeof newname, "%s/%s", folder_name, file_name);
+  } else {
+    snprintf(newname, sizeof newname, "%s/%s.%s", folder_name, file_name, folder_name);
+  }
+  rename(file_buffer, newname);
+}
+```
+
+### client.c
+
+Referensi code: <https://stackoverflow.com/questions/2014033/send-and-receive-a-file-in-socket-programming-in-linux-with-c-c-gcc-g>
+
+Zip folder hartakarun terlebih dahulu:
+
+```C++
+void* zip_file() {
+  pid_t child_id;
+  int status1;
+
+  child_id = fork();
+  if (child_id == 0) {
+    printf("haloo");
+    char *argv[] = {"zip", "-r", "./hartakarun.zip", "/home/oem/shift3/hartakarun", NULL};
+    execv("/usr/bin/zip", argv);
+  } else {
+    while (wait(&status1) > 0);
+  }
+}
+```
+
+Mendapatkan argumen "send hartakarun.zip":
+
+```C++
+...
+  if (argc > 1) {
+    if (strcmp(argv[1], "send") == 0) {
+      if (argc > 2) {
+        file_name = argv[2];
+      } else {
+        exit(EXIT_FAILURE);
+      }
+    } else {
+      exit(EXIT_FAILURE);
+    }
+  }
+...
+```
+
+Proses pengiriman file oleh client menggunakan TCP:
+
+```C++
+...
+  // Get socket.
+  proto = getprotobyname("tcp");
+  if (proto == NULL) {
+    perror("getprotobyname");
+    exit(EXIT_FAILURE);
+  }
+  sock = socket(AF_INET, SOCK_STREAM, proto->p_proto);
+  if (sock == -1) {
+    perror("socket");
+    exit(EXIT_FAILURE);
+  }
+  // Prepare socket_address.
+  host = gethostbyname(hostname);
+  if (host == NULL) {
+    fprintf(stderr, "error: gethostbyname(\"%s\")\n", hostname);
+    exit(EXIT_FAILURE);
+  }
+  in_address = inet_addr(inet_ntoa(*(struct in_addr*)*(host->h_addr_list)));
+  if (in_address == (in_addr_t)-1) {
+    fprintf(stderr, "error: inet_addr(\"%s\")\n", *(host->h_addr_list));
+    exit(EXIT_FAILURE);
+  }
+  socket_address.sin_addr.s_addr = in_address;
+  socket_address.sin_family = AF_INET;
+  socket_address.sin_port = htons(port);
+  // Do the actual connection.
+  if (connect(sock, (struct sockaddr*)&socket_address, sizeof(socket_address)) == -1) {
+    perror("connect");
+    exit(EXIT_FAILURE);
+  }
+
+  while (1) {
+    read_status = read(filestream, buffer, BUFSIZ);
+    if (read_status == 0) break;
+    if (read_status == -1) {
+      perror("read");
+      exit(EXIT_FAILURE);
+    }
+    if (write(sock, buffer, read_status) == -1) {
+      perror("write");
+      exit(EXIT_FAILURE);
+    }
+  }
+  close(filestream);
+...
+```
+
+### server.c
+
+Referensi code: <https://stackoverflow.com/questions/2014033/send-and-receive-a-file-in-socket-programming-in-linux-with-c-c-gcc-g>
+
+Proses penerimaan file (dalam bentuk buffer kemudian di-*write* ke file `hartakarun.zip`) oleh server menggunakan TCP:
+
+```C++
+...
+  // Create a socket and listen to it.
+  proto = getprotobyname("tcp");
+  if (proto == NULL) {
+    perror("getprotobyname");
+    exit(EXIT_FAILURE);
+  }
+  server_fd = socket(AF_INET, SOCK_STREAM, proto->p_proto);
+  if (server_fd == -1) {
+    perror("socket");
+    exit(EXIT_FAILURE);
+  }
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &enable_reuseaddr, sizeof(enable_reuseaddr)) < 0) {
+    perror("setsockopt(SO_REUSEADDR) failed");
+    exit(EXIT_FAILURE);
+  }
+  server_address.sin_family = AF_INET;
+  server_address.sin_addr.s_addr = htonl(INADDR_ANY);
+  server_address.sin_port = htons(port);
+  if (bind(server_fd, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
+    perror("bind");
+    exit(EXIT_FAILURE);
+  }
+  if (listen(server_fd, 5) == -1) {
+    perror("listen");
+    exit(EXIT_FAILURE);
+  }
+  fprintf(stderr, "listening on port %d\n", port);
+
+  while (1) {
+    client_len = sizeof(client_address);
+    printf("waiting for client\n");
+    client_fd = accept(server_fd, (struct sockaddr*)&client_address, &client_len);
+    filestream = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (filestream == -1) {
+      perror("open");
+      exit(EXIT_FAILURE);
+    }
+    do {
+      read_status = read(client_fd, buffer, BUFSIZ);
+      if (read_status == -1) {
+        perror("read");
+        exit(EXIT_FAILURE);
+      }
+      if (write(filestream, buffer, read_status) == -1) {
+        perror("write");
+        exit(EXIT_FAILURE);
+      }
+    } while (read_status > 0);
+    close(filestream);
+    close(client_fd);
+  }
+...
+```
+
+### run program
+
+```bash
+# sebelumnya file hartakarun.zip harus di-extract terlebih dahulu ke /home/[user]/shift3/
+gcc -pthread -o /home/[user]/shift3/hartakarun/soal3 soal3.c
+# masuk ke direktori hartakarun
+./soal3
+
+# compile client-server pada masing-masing direktori
+gcc client.c -o client # pada direktori Client/
+gcc server.c -o server # pada direktori Server/
+
+# proses menjalankan client-server
+./server # server dijalankan terlebih dahulu
+./client send hartakarun.zip # client mulai dijalankan
+```
+
+### dokumentasi
+
+Kendala yang sempat dihadapi adalah kurang paham dalam memindahkan file ke setiap folder kategori, hingga akhirnya menggunakan `snprintf`. Sempat tidak selesai pada bagian zip file karena sudah mendekati deadline saat membaca ulang bahwa diperbolehkan menggunakan `exec()` dan `fork()`. Sempat kebingungan dalam program client-server hingga akhirnya menemukan cara mengirim file dengan protokol TCP dan yang dikirim berupa buffer kemudian baru diproses *write* ke file yang dituju (`hartakarun.zip`).
