@@ -16,7 +16,7 @@ Download dua file zip dan unzip file zip tersebut di dua folder yang berbeda den
 
 Thread yang dibuat:
 
-```C++
+```c++
 int main()
 {
     pthread_t thread1, thread2, thread3;
@@ -40,7 +40,7 @@ Decode semua file .txt yang ada dengan base 64 dan masukkan hasilnya dalam satu 
 
 Fungsi untuk men-*download*, unzip, hingga membuat dua file `.txt`:
 
-```C++
+```c++
 void* download_and_unzip(char* folder_name)
 {
   pid_t child_id_1, child_id_2, child_id_3,
@@ -112,7 +112,7 @@ void* download_and_unzip(char* folder_name)
 
 Fungsi untuk membaca setiap line dalam file `.txt` hasil *extract* dan men-*decode* base64:
 
-```C++
+```c++
 char base46_map[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
                      'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
@@ -175,7 +175,7 @@ char* decode_base64(char* str) // I found this function on google:)
 
 Pindahkan kedua file .txt yang berisi hasil decoding ke folder yang baru bernama hasil.
 
-```C++
+```c++
 void* move_to_folder(char* folder_name, char* file_name)
 {
   pid_t child_id_1, child_id_2;
@@ -217,7 +217,7 @@ void* move_to_folder(char* folder_name, char* file_name)
 
 Folder hasil di-zip menjadi file hasil.zip dengan password 'mihinomenest[Nama user]'. (contoh password : mihinomenestnovak)
 
-```C++
+```c++
 void* zip_hasil_folder()
 {
   pid_t child_id_1, child_id_2;
@@ -251,7 +251,7 @@ Karena ada yang kurang, kalian diminta untuk unzip file hasil.zip dan buat file 
 
 Buat thread baru dan menunggu thread lama selesai dijalankan hingga zip folder.
 
-```C++
+```c++
 ...
     // unzip and create file no.txt (1e)
     pthread_create(&thread1, NULL, unzip_file_using_password, "hasil.zip");
@@ -266,7 +266,7 @@ Buat thread baru dan menunggu thread lama selesai dijalankan hingga zip folder.
 
 Fungsi untuk unzip dan membuat file baru:
 
-```C++
+```c++
 void* unzip_file_using_password()
 {
   pid_t child_id_1;
@@ -335,7 +335,7 @@ Kendala yang dialami adalah kurang mengerti cara menggunakan `/usr/bin/base64` u
 
 ### client.c
 
-```C++
+```c++
 void addTextToFileProblem(char *problemTitle, char *fileName, char *text)
 {
  char fileNameWithDirectory[256];
@@ -349,7 +349,7 @@ void addTextToFileProblem(char *problemTitle, char *fileName, char *text)
 
 Function addTextToFileProblem digunakan untuk menambahkan string ke dalam sebuah file yaitu pada saat mengunduh description.txt dan input.txt sebuah problem dari server.
 
-```C++
+```c++
 void recvWithoutTestByte(int fd, char *buffer, size_t size)
 {
  int byteCode = '0';
@@ -363,7 +363,7 @@ void recvWithoutTestByte(int fd, char *buffer, size_t size)
 
 Function recvWithoutTestByte digunakan untuk mengambil message yang dikirim oleh server dan membuang ping byte yang dikirim oleh server. Ping byte dikirim oleh server untuk mengecek apakah user masing terhubung dengan server.
 
-```C++
+```c++
 void getProblemNameAndSubmitFile(char *text, char *problemName, char *submitFile)
 {
  int i = 0;
@@ -424,7 +424,7 @@ Function getProblemNameAndSubmitFile digunakan untuk memparse string agar string
 
 Masuk ke dalam main
 
-```C++
+```c++
 struct sockaddr_in socketAddress;
 int socketFileDescriptor;
 struct hostent *serverHostData;
@@ -458,7 +458,7 @@ char command[2][256];
 
 pertama membuat koneksi dengan server kemudian menginisialisasi variable yang dibutuhkan untuk menyimpan input dari user.
 
-```C++
+```c++
 if (currentPage == 0)
 {
     while(respon <= 0 || respon >= 3)
@@ -482,7 +482,7 @@ if (currentPage == 0)
 
 currentPage == 0 adalah menu paling awal yang meminta user untuk register atau login.
 
-```C++
+```c++
 else if (currentPage == 1)
 {
     printf("Register\n");
@@ -514,7 +514,7 @@ else if (currentPage == 1)
 
 currentPage == 1 adalah menu register, untuk data akun yang akan diregister dikirim dalam 1 message dengan byte terdepan adalah 'r' sebagai penanda user mengirim perintah register dan server dapat menterjemahkannya.
 
-```C++
+```c++
 else if (currentPage == 2)
 {
     
@@ -554,7 +554,7 @@ else if (currentPage == 2)
 
 currentPage == 2 adalah menu login, mirip dengan sistem register dan byte terdepan message untuk server adalah 'l'.
 
-```C++
+```c++
 else if (currentPage == 3)
 {
     printf("\nMenu\n");
@@ -589,7 +589,7 @@ else if (currentPage == 3)
 
 currentPage == 3 adalah daftar command yang dapat diakses user yang telah login.
 
-```C++
+```c++
 else if (currentPage == 4)
 {
     char problemName[64];
@@ -715,7 +715,7 @@ else if (currentPage == 4)
 
 currentPage == 4 adalah menu untuk menambahkan problem ke server. User akan mengirim permintaan untuk mendaftarkan problem ke server dan server akan meminta judul problem. Judul problem akan dicek server, bila belum ada pada database maka dapat membuat problem tersebut, server akan memberitahu user bahwa user dapat mengirim deskripsi permasalahan kemudian user akan memasukkan lokasi file deskripsi permasalahan dan file tersebut akan dibaca satu persatu barisnya dan dikirim ke server, setelah EOF akan dikirim message untuk memberi tahu server bahwa upload file tersebut telah selesai, server kemudian akan meminta file lain yang perlu diupload dan langkah-langkahnya akan sama seperti mengirim file deskripsi.
 
-```C++
+```c++
 else if (currentPage == 5)
 {
     strcpy(message, "s");
@@ -744,7 +744,7 @@ else if (currentPage == 5)
 
 currentPage == 5 adalah menu see, user akan mengirim byte "s" ke server untuk meminta server mengirimkan daftar problem dan setelahnya akan mengeluarkan nama-nama problem yang didapat dari server hingga mendapatkan message "f" dari server.
 
-```C++
+```c++
 else if (currentPage == 6)
 {
     // dpr = download problem request
@@ -791,7 +791,7 @@ else if (currentPage == 6)
 
 currentPage == 6 adalah menu download problem, user mengirimkan message dengan prefix "dpr" dan bila server menyatakan problem ada, program akan membuat directory problem tersebut kemudian akan menerima message isi file description.txt dan input.txt dari server dan disimpan hingga menemukan message untuk berhenti.
 
-```C++
+```c++
 else if (currentPage == 7)
 {
     FILE *fileReaderOutputSubmission = fopen(command[1], "r");
@@ -838,7 +838,7 @@ currentPage == 7 adalah menu submit, file yang akan disubmit akan dibaca satu pe
 
 ### server.c
 
-```C++
+```c++
 int createTCPServerSocket() 
 {
     struct sockaddr_in socketAddress;
@@ -872,7 +872,7 @@ int createTCPServerSocket()
 
 Function createTCPServerSocket untuk membuat server socket TCP.
 
-```C++
+```c++
 void setupEpollConnection(int epollFileDescriptor, int clientFileDescriptor, struct epoll_event * event) 
 {
     event->events = EPOLLIN;
@@ -884,7 +884,7 @@ void setupEpollConnection(int epollFileDescriptor, int clientFileDescriptor, str
 
 Function setupEpollConnection untuk menambahkan file descriptor koneksi user pada epoll.
 
-```C++
+```c++
 void strcpyOffset(char *dest, char *src, int offset, int length)
 {
  strncpy(dest, src + offset, length);
@@ -894,7 +894,7 @@ void strcpyOffset(char *dest, char *src, int offset, int length)
 
 Function strcpyOffset adalah modifikasi strcpy untuk mengambil substring dengan panjang tertentu pada sebuah string.
 
-```C++
+```c++
 void getUsernameAndPasswordFromClient(char message[], char username[], char password[])
 {
  int usernameFromClientLength = message[1];
@@ -910,7 +910,7 @@ void getUsernameAndPasswordFromClient(char message[], char username[], char pass
 
 Function getUsernameAndPasswordFromClient digunakan untuk parse byte message yang dikirim oleh user ketika login atau register.
 
-```C++
+```c++
 int checkPasswordCompatible(char *password)
 {
  int length = strlen(password);
@@ -942,7 +942,7 @@ int checkPasswordCompatible(char *password)
 
 Function checkPasswordCompatible untuk mengecek apakah sebuah string terdiri dari huruf besar, huruf kecil, dan angka.
 
-```C++
+```c++
 void createProblemDatabaseFile()
 {
  FILE *problemDatabaseFile = fopen("problems.tsv", "a");
@@ -953,7 +953,7 @@ void createProblemDatabaseFile()
 
 Function createProblemDatabaseFile digunakan untuk membuat file database penyimpan problem
 
-```C++
+```c++
 int problemDatabaseFileCheckTitleExist(char *problemTitle)
 {
  FILE *problemDatabaseFile = fopen("problems.tsv", "r");
@@ -973,7 +973,7 @@ int problemDatabaseFileCheckTitleExist(char *problemTitle)
 
 Function problemDatabaseFileCheckTitleExist digunakan untuk mengecek apakah terdapat sebuah problem pada database
 
-```C++
+```c++
 int problemDatabaseFileAddNewProblem(char *problemTitle, char *userName)
 {
  FILE *problemDatabaseFile = fopen("problems.tsv", "a");
@@ -985,7 +985,7 @@ int problemDatabaseFileAddNewProblem(char *problemTitle, char *userName)
 
 Function problemDatabaseFileAddNewProblem digunakan untuk menambahkan problem pada database dan membuat directory penyimpanan file-filenya.
 
-```C++
+```c++
 void addTextToFileInProblemDirectory(char *problemTitle, char *fileName, char *text)
 {
  char fileNameWithDirectory[256];
@@ -1001,7 +1001,7 @@ Function addTextToFileInProblemDirectory digunakan untuk menambahkan teks pada s
 
 Masuk ke dalam main
 
-```C++
+```c++
 struct sockaddr_in newAddress;
 socklen_t addrlen;
 
@@ -1031,7 +1031,7 @@ createProblemDatabaseFile();
 
 Pertama-tama membuat server dan epoll untuk menampung koneksi dan membuat database penyimpanan file.
 
-```C++
+```c++
 epollEvent = epoll_wait(epollFileDescriptor, epollEvents, 1024, timeout_msecs);
 
 if (currentClientFileDescriptor != -1)
@@ -1049,7 +1049,7 @@ if (currentClientFileDescriptor != -1)
 
 Server akan mengecek terus message yang dikirim oleh user dan akan mengirimkan ping byte ke pada user untuk mengecek apakah user telah terputus koneksinya. Bila user telah terputus, maka akan ada slot kosong untuk user lain untuk connect.
 
-```C++
+```c++
 if (message[0] == 'r')
 {
     FILE *userDatabaseFile = fopen("user.txt", "r");
@@ -1101,7 +1101,7 @@ if (message[0] == 'r')
 
 Jika byte message "r" adalah penanda user meminta register, server akan mengecek apakah password memenuhi syarat dan username tersebut belum digunakan dan bila keduanya benar maka server akan menyimpan username dan password tersebut dan mengirim respon byte "a" untuk memberi tahu user bahwa register berhasil.
 
-```C++
+```c++
 else if (message[0] == 'l')
 {
     if (currentClientFileDescriptor == -1)
@@ -1168,7 +1168,7 @@ else if (message[0] == 'l')
 
 Bila byte message terdepan dari user adalah 'l' maka user mencoba login. Username dan password yang dikirim user akan dicek apakah ada di dalam database. Bila terdapat user lain yang telah login dan belum keluar, maka user tidak akan dapat login.
 
-```C++
+```c++
 else if (message[0] == 'p')
 {
     if (message[1] == 'a')
@@ -1255,7 +1255,7 @@ else if (message[0] == 'p')
 
 Prefix message "pa" adalah pemberi tahu bahwa user sedang melakukan upload permasalahan baru. Server akan menterjemahkan message tersebut apakah user melakukan upload judul problem baru, deskripsi, input, atau output.
 
-```C++
+```c++
 else if (message[0] == 's')
 {
     FILE *fileReaderProblemDatabase = fopen("problems.tsv", "r");
@@ -1276,7 +1276,7 @@ else if (message[0] == 's')
 
 Bila server menerima byte "s" dari user, itu artinya user meminta daftar problem. Server akan membaca daftar problem yang ada di database dan dikirim ke user satu-persatu dan diakhir dikirim message "sef" sebagai penanda bahwa request telah selesai.
 
-```C++
+```c++
 else if (message[0] == 'd')
 {
     if (message[1] == 'p')
@@ -1326,7 +1326,7 @@ else if (message[0] == 'd')
 
 Prefix "dpr" pada message adalah penanda user meminta unduh permasalahan. Server akan mengirimkan satu persatu line dari file description dan input kepada user dan setelah selesai akan mengirimkan byte "dprf".
 
-```C++
+```c++
 else if (message[0] == 'b')
 {
     char problemTitle[128];
@@ -1415,7 +1415,7 @@ permasalahan yang dihadapi adalah membuat epoll dikarenakan dokumentasi yang tid
 
 Fungsi untuk listing file secara rekursif:
 
-```C++
+```c++
 void* list_file_recursively(char *base_path)
 {
   char path[1000];
@@ -1451,7 +1451,7 @@ void* list_file_recursively(char *base_path)
 
 Thread dari setiap file dan memproses file:
 
-```C++
+```c++
 int main()
 {
   list_file_recursively(path_to_folder);
@@ -1487,7 +1487,7 @@ void* process_file(void *path_to_file)
 
 Fungsi untuk mendapatkan kategori file atau nama folder:
 
-```C++
+```c++
 char* get_folder_name(char *path_to_folder)
 {
   char *folder_name ;
@@ -1515,7 +1515,7 @@ char* get_folder_name(char *path_to_folder)
 
 Fungsi untuk mendapatkan nama file:
 
-```C++
+```c++
 char* get_file_name(char *path_to_file)
 {
   char *str = path_to_file;
@@ -1533,7 +1533,7 @@ char* get_file_name(char *path_to_file)
 
 Fungsi untuk membuat direktori berdasarkan kategori file:
 
-```C++
+```c++
 void* create_directory(char *folder_name)
 {
   mkdir(folder_name, 0777);
@@ -1542,7 +1542,7 @@ void* create_directory(char *folder_name)
 
 Fungsi untuk memindahkan file ke dalam folder kategori setiap file:
 
-```C++
+```c++
 void* move_file(char *file_buffer, char *file_name, char *folder_name)
 {
   char newname[2000];
@@ -1561,7 +1561,7 @@ Referensi code: <https://stackoverflow.com/questions/2014033/send-and-receive-a-
 
 Zip folder hartakarun terlebih dahulu:
 
-```C++
+```c++
 void* zip_file() {
   pid_t child_id;
   int status1;
@@ -1579,7 +1579,7 @@ void* zip_file() {
 
 Mendapatkan argumen "send hartakarun.zip":
 
-```C++
+```c++
 ...
   if (argc > 1) {
     if (strcmp(argv[1], "send") == 0) {
@@ -1597,7 +1597,7 @@ Mendapatkan argumen "send hartakarun.zip":
 
 Proses pengiriman file oleh client menggunakan TCP:
 
-```C++
+```c++
 ...
   // Get socket.
   proto = getprotobyname("tcp");
@@ -1652,7 +1652,7 @@ Referensi code: <https://stackoverflow.com/questions/2014033/send-and-receive-a-
 
 Proses penerimaan file (dalam bentuk buffer kemudian di-*write* ke file `hartakarun.zip`) oleh server menggunakan TCP:
 
-```C++
+```c++
 ...
   // Create a socket and listen to it.
   proto = getprotobyname("tcp");
